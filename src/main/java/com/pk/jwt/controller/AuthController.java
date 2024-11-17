@@ -1,28 +1,28 @@
 package com.pk.jwt.controller;
 
-import com.pk.jwt.model.JwtRequest;
-import com.pk.jwt.service.JwtService;
-import com.pk.jwt.service.UserService;
+import com.pk.jwt.model.User;
+import com.pk.jwt.repository.UserRepository;
+import com.pk.jwt.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
     @Autowired
-    private UserService userService;
-    @Autowired
-    private JwtService jwtService;
+    private UserRepository userRepository;
 
-    public ResponseEntity<String> login(@RequestBody JwtRequest jwtRequest) {
-        if (userService.authenticate(jwtRequest.getUsername(), jwtRequest.getPassword())) {
-            String token = jwtService.generateToken(jwtRequest.getUsername());
-            return ResponseEntity.ok(token);
+    @PostMapping("/login")
+    public String login(@RequestParam String username, @RequestParam String password) {
+        User user = userRepository.findByUsername(username);
+
+        if (user != null && password.equals(user.getPassword())) { // Normally, use BCrypt for password comparison
+            return JwtUtil.generateToken(username);
         } else {
-            return ResponseEntity.status(401).body("Invalid credentials");
+            throw new RuntimeException("Invalid credentials");
         }
     }
 }
